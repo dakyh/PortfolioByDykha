@@ -18,6 +18,34 @@
       : selectBody.classList.remove("scrolled");
   }
 
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const portfolioContainer = document.querySelector('.isotope-container');
+  
+    if (portfolioContainer) {
+      const isotope = new Isotope(portfolioContainer, {
+        itemSelector: '.portfolio-item',
+        layoutMode: 'fitRows',
+      });
+  
+      // Filtres
+      const filters = document.querySelectorAll('.portfolio-filters li');
+      filters.forEach(filter => {
+        filter.addEventListener('click', function () {
+          // Retirer la classe active de tous les filtres
+          filters.forEach(el => el.classList.remove('filter-active'));
+          // Ajouter la classe active au filtre sélectionné
+          this.classList.add('filter-active');
+  
+          // Filtrer les éléments
+          const filterValue = this.getAttribute('data-filter');
+          isotope.arrange({ filter: filterValue });
+        });
+      });
+    }
+  });
+  
+
   /**
    * Handle the mobile navigation toggle
    */
