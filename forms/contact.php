@@ -1,41 +1,54 @@
 <?php
-  /**
-  * Requires the "PHP Email Form" library
-  * The "PHP Email Form" library is available only in the pro version of the template
-  * The library should be uploaded to: vendor/php-email-form/php-email-form.php
-  * For more info and help: https://bootstrapmade.com/php-email-form/
-  */
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
-  // Replace contact@example.com with your real receiving email address
-  $receiving_email_address = 'contact@example.com';
+require 'vendor/autoload.php';
 
-  if( file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php' )) {
-    include( $php_email_form );
-  } else {
-    die( 'Unable to load the "PHP Email Form" Library!');
-  }
+// Vérifier si la méthode de requête est POST (le formulaire a été soumis)
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $name = htmlspecialchars(trim($_POST['name']));
+    $email = htmlspecialchars(trim($_POST['email']));
+    $subject = htmlspecialchars(trim($_POST['subject']));
+    $message = htmlspecialchars(trim($_POST['message']));
 
-  $contact = new PHP_Email_Form;
-  $contact->ajax = true;
-  
-  $contact->to = $receiving_email_address;
-  $contact->from_name = $_POST['name'];
-  $contact->from_email = $_POST['email'];
-  $contact->subject = $_POST['subject'];
+    // Validation des champs
+    if (!empty($name) && !empty($email) && !empty($subject) && !empty($message)) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            header('Location: contact.html?status=invalid_email');
+            exit();
+        }
 
-  // Uncomment below code if you want to use SMTP to send emails. You need to enter your correct SMTP credentials
-  /*
-  $contact->smtp = array(
-    'host' => 'example.com',
-    'username' => 'example',
-    'password' => 'pass',
-    'port' => '587'
-  );
-  */
+        $mail = new PHPMailer(true);
 
-  $contact->add_message( $_POST['name'], 'From');
-  $contact->add_message( $_POST['email'], 'Email');
-  $contact->add_message( $_POST['message'], 'Message', 10);
+        try {
+            // Paramètres du serveur SMTP
+            $mail->isSMTP();
+            $mail->Host = 'smtp.gmail.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'votre_email@gmail.com';  // Remplacez par votre adresse Gmail
+            $mail->Password = 'votre_mot_de_passe';  // Remplacez par votre mot de passe Gmail
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port = 587;
 
-  echo $contact->send();
+            // Destinataire
+            $mail->setFrom('votre_email@gmail.com', 'Khady DIAGNE');  // Adresse fixe comme expéditeur
+            $mail->addReplyTo($email, $name);  // Permet de répondre à l'utilisateur
+            $mail->addAddress('mamekhadydiagne27@gmail.com');  // L'email de réception
+
+            // Contenu de l'email
+            $mail->isHTML(false);
+            $mail->Subject = $subject;
+            $mail->Body = "Nom: $name\nEmail: $email\nMessage: $message";
+
+            // Envoi de l'email
+            $mail->send();
+            header('Location: contact.html?status=success');
+        } catch (Exception $e) {
+            error_log("Erreur lors de l'envoi de l'email : {$mail->ErrorInfo}");
+            header('Location: contact.html?status=error');
+        }
+    } else {
+        header('Location: contact.html?status=missing');
+    }
+}
 ?>
